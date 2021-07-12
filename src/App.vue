@@ -4,24 +4,24 @@
     <functional-button-set
       class="my-5 text-center"
       @order-new-drink="openEditor"
-      @delete-drink="deleteDrink"
     />
     <div class="drink__list__wrapper my-4">
       <span v-if="drinkOrderData.length === 0">
         目前沒有任何訂單，點選 add drink 訂一杯飲料來喝吧！
       </span>
-      <drink-editor
+      <drink-list-item
         v-else
+        :orders="drinkOrderData"
+        @clickModifyOrder="clickModifyOrder"
+        @clickDelete="deleteDrink"
+      />
+      <drink-editor
+        v-if="showDrinkEditor"
         :setting="drinkSetting"
-        :showModal="showDrinkEditor"
         :editOrderData="editOrderData"
         @closeEditorModal="closeEditorModal"
         @addNewOrder="addNewOrder"
         @updateOrderData="updateOrderData"
-      />
-      <drink-list-item
-        :orders="drinkOrderData"
-        @clickModifyOrder="clickModifyOrder"
       />
     </div>
   </div>
@@ -132,35 +132,68 @@ export default {
     };
   },
   methods: {
+    resetDefault() {
+      this.editOrderData = {
+        name: "",
+        quantity: "",
+        drinkIce: "",
+        drinkSugar: "",
+        drinkTopping: "",
+        who: "",
+        id: "",
+      };
+    },
     openEditor() {
+      this.resetDefault();
       this.showDrinkEditor = true;
     },
-    deleteDrink($event) {
-      console.log($event);
+    deleteDrink(id) {
+      this.drinkOrderData.forEach((item, index) => {
+        if (item.id === id) {
+          console.log(item.id, id, index);
+          this.drinkOrderData.splice(index,1)
+          return
+        }
+      });
     },
     closeEditorModal() {
       this.showDrinkEditor = false;
-      this.editOrderData = "";
+      this.resetDefault();
     },
     clickModifyOrder(id) {
       const selectedOrder = this.drinkOrderData.filter((item) => {
         return item.id === id;
       });
-      this.editOrderData = selectedOrder[0]
+      this.editOrderData = selectedOrder[0];
       this.showDrinkEditor = true;
     },
     updateOrderData(data) {
       const id = data.id;
-      this.drinkOrderData.forEach((item) => {
+      this.drinkOrderData.forEach((item, index) => {
         if (item.id === id) {
-          item = data;
+          this.drinkOrderData[index] = {
+            name: data.name,
+            quantity: data.quantity,
+            drinkIce: data.drinkIce,
+            drinkSugar: data.drinkSugar,
+            drinkTopping: data.drinkTopping,
+            who: data.who,
+            id: this.nextId,
+          };
         }
       });
     },
     addNewOrder(data) {
-      data.id = this.nextId;
       this.nextId += 1;
-      this.drinkOrderData.push(data);
+      this.drinkOrderData.push({
+        name: data.name,
+        quantity: data.quantity,
+        drinkIce: data.drinkIce,
+        drinkSugar: data.drinkSugar,
+        drinkTopping: data.drinkTopping,
+        who: data.who,
+        id: this.nextId,
+      });
     },
   },
 };

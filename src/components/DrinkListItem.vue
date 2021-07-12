@@ -12,6 +12,7 @@
       span(v-if="order.drinkTopping.length !== 0") 加
         span.text-pink-300.p-1 {{ mapOrderText('Topping', order.drinkTopping) }}
     button.bg-blue-200.px-2.py-1.rounded.hover_bg-blue-300.text-sm(@click="$emit('clickModifyOrder', order.id)") 修改訂單
+    button.bg-red-200.px-2.py-1.ml-3.rounded.hover_bg-red-300.text-sm(@click="$emit('clickDelete', order.id)") 刪除訂單
 
 </template>
 <script>

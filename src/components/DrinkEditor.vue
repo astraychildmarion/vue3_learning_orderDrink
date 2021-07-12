@@ -10,7 +10,6 @@
       w-screen
       h-screen
     "
-    v-if="showModal"
   >
     <!-- TODO tainwaid how to show minus -->
     <div
@@ -89,11 +88,11 @@
         <template v-for="lang in defaultTitle" :key="lang.value">
           <label :for="lang.value" class="flex-1 block mx-2"
             >{{ lang.text }}
-            <select :id="lang.value" v-model="form[`${lang.value}`]" class="w-4/5">
+            <select :id="lang.value" v-model="form[lang.value]" class="w-4/5">
               <option
                 v-for="item in setting[`${lang.value}`]"
                 :key="item.value"
-                :value="item.value"
+                :value="parseInt(item.value)"
               >
                 {{ item.text }}
               </option>
@@ -102,11 +101,13 @@
           </label>
         </template>
       </div>
-      <confirm-button-set @click-confirm="sentOrderRequest" @click-cancel="closeModal" />
+      {{ form }}
+      <confirm-button-set @click-confirm="checkValidation" @click-cancel="closeModal" />
     </div>
   </div>
 </template>
 <script>
+import {reactive } from 'vue';
 import ConfirmButtonSet from "./ConfirmButtonSet.vue";
 export default {
   components: { ConfirmButtonSet },
@@ -114,22 +115,7 @@ export default {
     setting: {
       type: Object,
     },
-    showModal: {
-      default: false,
-      type: Boolean,
-    },
     editOrderData: {
-      default() {
-        return {
-          name: '',
-          quantity: '',
-          drinkIce: '',
-          drinkSugar: '',
-          drinkTopping: '',
-          who: '',
-          id: '',
-        }
-      },
       type: Object
     }
   },
@@ -150,19 +136,19 @@ export default {
           value: "drinkTopping",
         },
       ],
+      keyArray: ['name', 'quantity', 'drinkIce', 'drinkSugar', 'drinkTopping', 'who', 'id']
     };
   },
   setup(props) {
-    console.log('props', props.editOrderData)
-    const error = {
+    const error = reactive({
       name: false,
       quantity: false,
       drinkIce: false,
       drinkSugar: false,
       drinkTopping: false,
       who: false,
-    }
-    const form = {
+    })
+    const form = reactive({
         name: props.editOrderData.name,
         quantity: props.editOrderData.quantity,
         drinkIce: props.editOrderData.drinkIce,
@@ -170,24 +156,29 @@ export default {
         drinkTopping: props.editOrderData.drinkTopping,
         who: props.editOrderData.who,
         id: props.editOrderData.id,
-      }
-    const keyArray = Object.keys(form);
-    return { keyArray, form, error }
+      })
+    console.log('form', form)
+    const errorCheckArray = Object.keys(error);
+    return { errorCheckArray, error, form }
   },
   methods: {
-    sentOrderRequest() {
+    checkValidation() {
       const errorArray = []
-      this.keyArray.forEach(key => this.error[key] = false)
-      this.keyArray.forEach(key => {
+      this.errorCheckArray.forEach(key => this.error[key] = false)
+      this.errorCheckArray.forEach(key => {
         if (this.form[key] === '') errorArray.push(key)
       })
-      if (errorArray.length === 0) this.closeModal()
-      else errorArray.forEach(key => this.error[key] = true )
-      if (this.id !== '') {
+      if (errorArray.length !== 0) errorArray.forEach(key => this.error[key] = true )
+      else this.sentOrderRequest()
+    },
+    sentOrderRequest() {
+      console.log('edited form', this.form)
+      if (this.form.id !== '') {
         this.$emit('updateOrderData', this.form)
       } else {
         this.$emit('addNewOrder', this.form)
       }
+      this.closeModal()
     },
     closeModal() {
       this.keyArray.forEach(key => this.form[key] = '')
