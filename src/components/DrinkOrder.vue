@@ -16,7 +16,7 @@
       .flex-1 {{ mapOrderText('sugar', order.sugar) }}
       .flex-1
         button.bg-blue-200.px-1.py-1.rounded.hover_bg-blue-300.text-sm(
-          @click="clickModifyOrder()",
+          @click="$emit('clickModifyOrder',order)",
           v-show="!isEditMode"
         ) 改
         button.bg-green-200.px-1.py-1.rounded.hover_bg-green-300.text-sm(
@@ -24,7 +24,7 @@
           v-show="isEditMode"
         ) 存
         button.bg-red-200.px-1.py-1.ml-3.rounded.hover_bg-red-300.text-sm(
-          @click="$emit('clickDelete')"
+          @click="$emit('deleteDrink', order)"
         ) 刪
 
 </template>

@@ -19,6 +19,9 @@
       <div class="mb-8">
         <label class="mx-2"
           >誰要喝？
+          <span class="text-red-400 text-xs" v-show="!isWhoFilled">{{
+            errorHint
+          }}</span>
           <input
             type="text"
             v-model="form.who"
@@ -34,13 +37,13 @@
               focus:border-indigo-500
             "
           />
-          <span class="text-red-400 text-xs" v-show="error.who">{{
-            errorHint
-          }}</span>
         </label>
         <div class="flex mt-5">
           <label class="mx-2 w-6/12"
             >品名
+            <span class="text-red-400 text-xs" v-show="!isNameFilled">{{
+              errorHint
+            }}</span>
             <input
               type="text"
               v-model="form.name"
@@ -56,12 +59,12 @@
                 focus:border-indigo-500
               "
             />
-            <span class="text-red-400 text-xs" v-show="error.name">{{
-              errorHint
-            }}</span>
           </label>
           <label class="mx-2 w-6/12"
             >數量
+            <span class="text-red-400 text-xs" v-show="!isQuantityFilled">{{
+              errorHint
+            }}</span>
             <input
               type="number"
               v-model="form.quantity"
@@ -78,17 +81,16 @@
                 focus:border-indigo-500
               "
             />
-            <span class="text-red-400 text-xs" v-show="error.quantity">{{
-              errorHint
-            }}</span>
           </label>
         </div>
         <div class="flex flex-wrap">
           <template v-for="option in drinkOption" :key="option.value">
             <label :for="option.value" class="m-2 flex-1 w-3/12"
               >{{ option.text }}
+              <span class="text-red-400 text-xs" v-show="isShow(option.value)">
+                {{ errorHint }}
+              </span>
               <select
-                :id="option.value"
                 v-model="form[`${option.value}`]"
                 class="w-4/5 text-center"
               >
@@ -100,12 +102,6 @@
                   {{ item.text }}
                 </option>
               </select>
-              <div
-                class="text-red-400 text-xs"
-                v-show="error[`${option.value}`]"
-              >
-                {{ errorHint }}
-              </div>
             </label>
           </template>
         </div>
@@ -126,14 +122,14 @@
         再訂一杯
       </button> -->
       <ConfirmButtonSet
-        @click-confirm="checkValidation"
+        @click-confirm="sentOrderRequest"
         @click-cancel="closeModal"
       />
     </div>
   </div>
 </template>
 <script>
-import { reactive } from "vue";
+import { reactive, computed } from "vue";
 import ConfirmButtonSet from "./ConfirmButtonSet.vue";
 export default {
   components: { ConfirmButtonSet },
@@ -158,50 +154,78 @@ export default {
           value: "sugar",
         },
       ],
-      keyArray: ["name", "quantity", "ice", "sugar", "who", "id"],
+      error: {
+        who: false,
+        name: false,
+        quantity: false,
+        ice: false,
+        sugar: false,
+      },
     };
   },
-  setup(props) {
-    const error = reactive({
-      name: false,
-      quantity: false,
-      ice: false,
-      sugar: false,
-      who: false,
+  setup(props, { emit }) {
+    const form = reactive(props.drinkOrder);
+
+    const isWhoFilled = computed(() => {
+      return form.who === "" ? false : true;
     });
-    const form = reactive({
-      who: props.drinkOrder.who,
-      name: props.drinkOrder.who,
-      quantity: props.drinkOrder.quantity,
-      ice: props.drinkOrder.ice,
-      sugar: props.drinkOrder.sugar,
+    const isNameFilled = computed(() => {
+      return form.name === "" ? false : true;
     });
-    const errorCheckArray = Object.keys(error);
-    return { errorCheckArray, error, form };
-  },
-  computed: {
-    isOrderFilled() {
-      // TODO check form , if all is filled, cancel disabled.
-      return true;
-    },
+    const isiceFilled = computed(() => {
+      return form.ice === "" ? false : true;
+    });
+    const issugarFilled = computed(() => {
+      return form.sugar === "" ? false : true;
+    });
+    const isQuantityFilled = computed(() => {
+      return form.quantity === "" ||
+        form.quantity === 0 ||
+        form.quantity === undefined
+        ? false
+        : true;
+    });
+    const closeModal = () => {
+      const keyArray = ["name", "quantity", "ice", "sugar", "who", "id"];
+      keyArray.forEach((key) => (form[key] = ""));
+      emit("closeEditor");
+    };
+    const sentOrderRequest = () => {
+      if (
+        isWhoFilled.value &&
+        isNameFilled.value &&
+        issugarFilled.value &&
+        isiceFilled.value &&
+        isQuantityFilled.value
+      ) {
+        if (form.id !== "") {
+          emit("updateOrderData", form);
+        } else {
+          emit("addNewOrder", form);
+        }
+        closeModal();
+      } else {
+        console.log("validation failed");
+      }
+    };
+    return {
+      form,
+      isWhoFilled,
+      isNameFilled,
+      issugarFilled,
+      isiceFilled,
+      isQuantityFilled,
+      sentOrderRequest,
+      closeModal,
+    };
   },
   methods: {
-    checkValidation() {
-      // TODO form validation
-      this.sentOrderRequest();
-    },
-    sentOrderRequest() {
-      console.log("sentOrderRequest", this.form, typeof this.form);
-      this.$emit('addNewOrder', this.form)
-      this.closeModal();
-    },
     orderMoreDrink() {
       // TODO check validation no empty input
       // this.drinkOrders.push(Vue.util.extend({}, this.drinkOrder))
     },
-    closeModal() {
-      this.keyArray.forEach((key) => (this.form[key] = ""));
-      this.$emit("closeEditor");
+    isShow(i) {
+      return !this[`is${i}Filled`];
     },
   },
 };

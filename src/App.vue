@@ -14,7 +14,7 @@
         <DrinkOrder
           :order="order"
           @clickModifyOrder="clickModifyOrder"
-          @clickDelete="deleteDrink"
+          @deleteDrink="deleteDrink"
         />
       </div>
       <DrinkEditor
@@ -30,7 +30,7 @@
 </template>
 
 <script>
-import { ref } from 'vue'
+import { reactive, ref } from "vue";
 import DrinkEditor from "./components/DrinkEditor.vue";
 import DrinkOrder from "./components/DrinkOrder.vue";
 import FunctionalButtonSet from "./components/FunctionalButtonSet.vue";
@@ -41,28 +41,86 @@ export default {
     FunctionalButtonSet,
     DrinkOrder,
   },
-  setup(){
-    const drinkOrders = ref([]);
-    const firstDrink =        {
-        who: "ME",
-        name: "Fresh Milk",
-        quantity: "10",
-        ice: "1",
-        sugar: "1",
-      }
-    drinkOrders.value.push(firstDrink)
-    return { drinkOrders}
+  setup() {
+    const showEditor = ref(false);
+    const id = ref(1);
+    const drinkOrders = reactive([]);
+    drinkOrders.push({
+      who: "ME",
+      name: "Fresh Milk",
+      quantity: "10",
+      ice: "1",
+      sugar: "1",
+      id: 0,
+    });
+    let drinkOrder = reactive({
+      who: "",
+      name: "",
+      quantity: "",
+      ice: "",
+      sugar: "",
+      id: "",
+    });
+    const addNewOrder = (form) => {
+      // TODO WHY ??? I can not use form to push in to drinkOrders directly ?
+      drinkOrders.push({
+        who: form.who,
+        name: form.name,
+        quantity: form.quantity,
+        ice: form.ice,
+        sugar: form.sugar,
+        id: id,
+      });
+      id.value += 1;
+    };
+    const openEditor = () => {
+      showEditor.value = true;
+    };
+    const closeEditor = () => {
+      showEditor.value = false;
+    };
+    const clickModifyOrder = (order) => {
+      const currentEditDrink = drinkOrders.filter((item) => {
+        return item.id === order.id;
+      });
+      const keys = Object.keys(drinkOrder);
+      keys.forEach((key) => {
+        drinkOrder[key] = currentEditDrink[0][key];
+      });
+      openEditor();
+    };
+    const updateOrderData = (order) => {
+      drinkOrders.forEach((item) => {
+        if (item.id === order.id) {
+          const keys = Object.keys(drinkOrder);
+          keys.forEach((key) => {
+            item[key] = order[key];
+          });
+        }
+      });
+    };
+    const deleteDrink = (order) => {
+      drinkOrders.forEach((item, index) => {
+        if (item.id === order.id) {
+          drinkOrders.splice(index, 1)
+        }
+      });
+    };
+    return {
+      drinkOrders,
+      drinkOrder,
+      id,
+      showEditor,
+      addNewOrder,
+      clickModifyOrder,
+      closeEditor,
+      openEditor,
+      updateOrderData,
+      deleteDrink
+    };
   },
   data() {
     return {
-      showEditor: false,
-      drinkOrder: {
-        who: "",
-        name: "",
-        quantity: "",
-        ice: "",
-        sugar: "",
-      },
       drinkSetting: {
         ice: [
           {
@@ -102,42 +160,7 @@ export default {
         ],
       },
     };
-  },
-  methods: {
-    resetDefault() {
-      this.drinkOrder = {
-        who: "",
-        name: "",
-        quantity: "",
-        ice: "",
-        sugar: "",
-      };
-    },
-    addNewOrder(form) {
-      this.drinkOrders.push({
-      who: form.who,
-      name: form.who,
-      quantity: form.quantity,
-      ice: form.ice,
-      sugar: form.sugar,
-    })
-    console.log('after this.drinkOrders', this.drinkOrders);
-    },
-    openEditor() {
-      this.showEditor = true;
-    },
-    deleteDrink() {},
-    closeEditor() {
-      this.showEditor = false;
-      this.resetDefault();
-    },
-    clickModifyOrder() {
-
-    },
-    updateOrderData() {
-
-    },
-  },
+  }
 };
 </script>
 <style lang="scss">
