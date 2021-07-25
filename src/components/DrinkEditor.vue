@@ -1,20 +1,10 @@
 <template>
   <div
-    class="
-      drink__detail__bg
-      bg-gray-500
-      bg-opacity-25
-      absolute
-      bottom-0
-      left-0
-      w-screen
-      h-screen
-    "
+    class="bg-gray-500 bg-opacity-25 absolute bottom-0 left-0 w-screen h-screen"
   >
     <!-- TODO tainwaid how to show minus -->
     <div
       class="
-        drink__detail
         bg-white
         px-5
         py-6
@@ -26,88 +16,124 @@
         translate-y-50
       "
     >
-      <div class="flex mb-8">
-        <label for="who" class="flex-1 mx-2"
+      <div class="mb-8">
+        <label class="mx-2"
           >誰要喝？
           <input
             type="text"
-            id="who"
             v-model="form.who"
             class="
               w-full
               content-center
               text-base
-              py-2
+              px-1
+              mt-1
+              mb-4
               border-b border-gray-300
               focus:outline-none
               focus:border-indigo-500
             "
           />
-          <span class="text-red-400 text-xs" v-show="error.who">{{ errorHint }}</span>
+          <span class="text-red-400 text-xs" v-show="error.who">{{
+            errorHint
+          }}</span>
         </label>
-        <label for="name" class="flex-1 mx-2"
-          >品名
-          <input
-            type="text"
-            id="name"
-            v-model="form.name"
-            class="
-              w-full
-              content-center
-              text-base
-              py-2
-              border-b border-gray-300
-              focus:outline-none
-              focus:border-indigo-500
-            "
-          />
-          <span class="text-red-400 text-xs" v-show="error.name">{{ errorHint }}</span>
-
-        </label>
-        <label for="quantity" class="flex-1 mx-2"
-          >數量
-          <input
-            type="number"
-            id="quantity"
-            v-model="form.quantity"
-            min="1"
-            class="
-              w-full
-              content-center
-              text-base
-              py-2
-              border-b border-gray-300
-              focus:outline-none
-              focus:border-indigo-500
-            "
-          />
-          <span class="text-red-400 text-xs" v-show="error.quantity">{{ errorHint }}</span>
-        </label>
-      </div>
-      <div class="flex mb-8">
-        <template v-for="lang in defaultTitle" :key="lang.value">
-          <label :for="lang.value" class="flex-1 block mx-2"
-            >{{ lang.text }}
-            <select :id="lang.value" v-model="form[lang.value]" class="w-4/5">
-              <option
-                v-for="item in setting[`${lang.value}`]"
-                :key="item.value"
-                :value="parseInt(item.value)"
-              >
-                {{ item.text }}
-              </option>
-            </select>
-            <div class="text-red-400 text-xs" v-show="error[`${lang.value}`]">{{ errorHint }}</div>
+        <div class="flex mt-5">
+          <label class="mx-2 w-6/12"
+            >品名
+            <input
+              type="text"
+              v-model="form.name"
+              class="
+                w-full
+                content-center
+                text-base
+                px-1
+                mt-1
+                mb-4
+                border-b border-gray-300
+                focus:outline-none
+                focus:border-indigo-500
+              "
+            />
+            <span class="text-red-400 text-xs" v-show="error.name">{{
+              errorHint
+            }}</span>
           </label>
-        </template>
+          <label class="mx-2 w-6/12"
+            >數量
+            <input
+              type="number"
+              v-model="form.quantity"
+              min="1"
+              class="
+                w-full
+                content-center
+                text-base
+                px-1
+                mt-1
+                mb-4
+                border-b border-gray-300
+                focus:outline-none
+                focus:border-indigo-500
+              "
+            />
+            <span class="text-red-400 text-xs" v-show="error.quantity">{{
+              errorHint
+            }}</span>
+          </label>
+        </div>
+        <div class="flex flex-wrap">
+          <template v-for="option in drinkOption" :key="option.value">
+            <label :for="option.value" class="m-2 flex-1 w-3/12"
+              >{{ option.text }}
+              <select
+                :id="option.value"
+                v-model="form[`${option.value}`]"
+                class="w-4/5 text-center"
+              >
+                <option
+                  v-for="item in setting[`${option.value}`]"
+                  :key="item.value"
+                  :value="parseInt(item.value)"
+                >
+                  {{ item.text }}
+                </option>
+              </select>
+              <div
+                class="text-red-400 text-xs"
+                v-show="error[`${option.value}`]"
+              >
+                {{ errorHint }}
+              </div>
+            </label>
+          </template>
+        </div>
       </div>
       {{ form }}
-      <confirm-button-set @click-confirm="checkValidation" @click-cancel="closeModal" />
+      <!-- <button
+        class="
+          px-3
+          py-1
+          bg-pink-400
+          hover_bg-pink-500
+          text-sm text-white
+          rounded
+        "
+        :disabled="isOrderFilled"
+        @click="orderMoreDrink"
+      >
+        再訂一杯
+      </button> -->
+      <ConfirmButtonSet
+        @click-confirm="checkValidation"
+        @click-cancel="closeModal"
+      />
     </div>
   </div>
 </template>
 <script>
-import {reactive } from 'vue';
+import { reactive } from "vue";
 import ConfirmButtonSet from "./ConfirmButtonSet.vue";
 export default {
   components: { ConfirmButtonSet },
@@ -115,77 +141,70 @@ export default {
     setting: {
       type: Object,
     },
-    editOrderData: {
-      type: Object
-    }
+    drinkOrder: {
+      type: Object,
+    },
   },
   data() {
     return {
       errorHint: "這裡沒填！",
-      defaultTitle: [
+      drinkOption: [
         {
           text: "冰塊",
-          value: "drinkIce",
+          value: "ice",
         },
         {
           text: "甜度",
-          value: "drinkSugar",
-        },
-        {
-          text: "配料",
-          value: "drinkTopping",
+          value: "sugar",
         },
       ],
-      keyArray: ['name', 'quantity', 'drinkIce', 'drinkSugar', 'drinkTopping', 'who', 'id']
+      keyArray: ["name", "quantity", "ice", "sugar", "who", "id"],
     };
   },
   setup(props) {
     const error = reactive({
       name: false,
       quantity: false,
-      drinkIce: false,
-      drinkSugar: false,
-      drinkTopping: false,
+      ice: false,
+      sugar: false,
       who: false,
-    })
+    });
     const form = reactive({
-        name: props.editOrderData.name,
-        quantity: props.editOrderData.quantity,
-        drinkIce: props.editOrderData.drinkIce,
-        drinkSugar: props.editOrderData.drinkSugar,
-        drinkTopping: props.editOrderData.drinkTopping,
-        who: props.editOrderData.who,
-        id: props.editOrderData.id,
-      })
-    console.log('form', form)
+      who: props.drinkOrder.who,
+      name: props.drinkOrder.who,
+      quantity: props.drinkOrder.quantity,
+      ice: props.drinkOrder.ice,
+      sugar: props.drinkOrder.sugar,
+    });
     const errorCheckArray = Object.keys(error);
-    return { errorCheckArray, error, form }
+    return { errorCheckArray, error, form };
+  },
+  computed: {
+    isOrderFilled() {
+      // TODO check form , if all is filled, cancel disabled.
+      return true;
+    },
   },
   methods: {
     checkValidation() {
-      const errorArray = []
-      this.errorCheckArray.forEach(key => this.error[key] = false)
-      this.errorCheckArray.forEach(key => {
-        if (this.form[key] === '') errorArray.push(key)
-      })
-      if (errorArray.length !== 0) errorArray.forEach(key => this.error[key] = true )
-      else this.sentOrderRequest()
+      // TODO form validation
+      this.sentOrderRequest();
     },
     sentOrderRequest() {
-      console.log('edited form', this.form)
-      if (this.form.id !== '') {
-        this.$emit('updateOrderData', this.form)
-      } else {
-        this.$emit('addNewOrder', this.form)
-      }
-      this.closeModal()
+      console.log("sentOrderRequest", this.form, typeof this.form);
+      this.$emit('addNewOrder', this.form)
+      this.closeModal();
+    },
+    orderMoreDrink() {
+      // TODO check validation no empty input
+      // this.drinkOrders.push(Vue.util.extend({}, this.drinkOrder))
     },
     closeModal() {
-      this.keyArray.forEach(key => this.form[key] = '')
-      this.$emit('closeEditorModal')
-    }
-  }
+      this.keyArray.forEach((key) => (this.form[key] = ""));
+      this.$emit("closeEditor");
+    },
+  },
 };
 </script>
-<style lang="scss" scoped>
+<style option="scss" scoped>
 </style>

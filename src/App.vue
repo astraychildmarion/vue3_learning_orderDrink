@@ -6,20 +6,22 @@
       @order-new-drink="openEditor"
     />
     <div class="drink__list__wrapper my-4">
-      <span v-if="drinkOrderData.length === 0">
+      <span v-if="drinkOrders.length === 0">
         目前沒有任何訂單，點選 add drink 訂一杯飲料來喝吧！
       </span>
-      <drink-list-item
-        v-else
-        :orders="drinkOrderData"
-        @clickModifyOrder="clickModifyOrder"
-        @clickDelete="deleteDrink"
-      />
-      <drink-editor
-        v-if="showDrinkEditor"
+      <div v-for="(order, index) in drinkOrders" :key="index">
+        {{ drinkOrders }}
+        <DrinkOrder
+          :order="order"
+          @clickModifyOrder="clickModifyOrder"
+          @clickDelete="deleteDrink"
+        />
+      </div>
+      <DrinkEditor
+        v-show="showEditor"
         :setting="drinkSetting"
-        :editOrderData="editOrderData"
-        @closeEditorModal="closeEditorModal"
+        :drinkOrder="drinkOrder"
+        @closeEditor="closeEditor"
         @addNewOrder="addNewOrder"
         @updateOrderData="updateOrderData"
       />
@@ -28,53 +30,41 @@
 </template>
 
 <script>
+import { ref } from 'vue'
 import DrinkEditor from "./components/DrinkEditor.vue";
-import DrinkListItem from "./components/DrinkListItem.vue";
+import DrinkOrder from "./components/DrinkOrder.vue";
 import FunctionalButtonSet from "./components/FunctionalButtonSet.vue";
 export default {
   name: "App",
-
   components: {
     DrinkEditor,
     FunctionalButtonSet,
-    DrinkListItem,
+    DrinkOrder,
   },
-
+  setup(){
+    const drinkOrders = ref([]);
+    const firstDrink =        {
+        who: "ME",
+        name: "Fresh Milk",
+        quantity: "10",
+        ice: "1",
+        sugar: "1",
+      }
+    drinkOrders.value.push(firstDrink)
+    return { drinkOrders}
+  },
   data() {
     return {
-      nextId: 3,
-      showDrinkEditor: false,
-      editOrderData: {
+      showEditor: false,
+      drinkOrder: {
+        who: "",
         name: "",
         quantity: "",
-        drinkIce: "",
-        drinkSugar: "",
-        drinkTopping: "",
-        who: "",
-        id: "",
+        ice: "",
+        sugar: "",
       },
-      drinkOrderData: [
-        {
-          name: "紅茶",
-          quantity: 1,
-          drinkIce: 0,
-          drinkSugar: 2,
-          drinkTopping: 1,
-          who: "添寶",
-          id: 1,
-        },
-        {
-          name: "奶茶",
-          quantity: 3,
-          drinkIce: 1,
-          drinkSugar: 2,
-          drinkTopping: "",
-          who: "景鴻",
-          id: 2,
-        },
-      ],
       drinkSetting: {
-        drinkIce: [
+        ice: [
           {
             value: 0,
             text: "去冰",
@@ -92,7 +82,7 @@ export default {
             text: "熱飲",
           },
         ],
-        drinkSugar: [
+        sugar: [
           {
             value: 0,
             text: "去糖",
@@ -110,90 +100,42 @@ export default {
             text: "多糖",
           },
         ],
-        drinkTopping: [
-          {
-            value: 0,
-            text: "珍珠",
-          },
-          {
-            value: 1,
-            text: "咖啡凍",
-          },
-          {
-            value: 2,
-            text: "布丁",
-          },
-          {
-            value: 3,
-            text: "椰果",
-          },
-        ],
       },
     };
   },
   methods: {
     resetDefault() {
-      this.editOrderData = {
+      this.drinkOrder = {
+        who: "",
         name: "",
         quantity: "",
-        drinkIce: "",
-        drinkSugar: "",
-        drinkTopping: "",
-        who: "",
-        id: "",
+        ice: "",
+        sugar: "",
       };
     },
+    addNewOrder(form) {
+      this.drinkOrders.push({
+      who: form.who,
+      name: form.who,
+      quantity: form.quantity,
+      ice: form.ice,
+      sugar: form.sugar,
+    })
+    console.log('after this.drinkOrders', this.drinkOrders);
+    },
     openEditor() {
-      this.resetDefault();
-      this.showDrinkEditor = true;
+      this.showEditor = true;
     },
-    deleteDrink(id) {
-      this.drinkOrderData.forEach((item, index) => {
-        if (item.id === id) {
-          console.log(item.id, id, index);
-          this.drinkOrderData.splice(index,1)
-          return
-        }
-      });
-    },
-    closeEditorModal() {
-      this.showDrinkEditor = false;
+    deleteDrink() {},
+    closeEditor() {
+      this.showEditor = false;
       this.resetDefault();
     },
-    clickModifyOrder(id) {
-      const selectedOrder = this.drinkOrderData.filter((item) => {
-        return item.id === id;
-      });
-      this.editOrderData = selectedOrder[0];
-      this.showDrinkEditor = true;
+    clickModifyOrder() {
+
     },
-    updateOrderData(data) {
-      const id = data.id;
-      this.drinkOrderData.forEach((item, index) => {
-        if (item.id === id) {
-          this.drinkOrderData[index] = {
-            name: data.name,
-            quantity: data.quantity,
-            drinkIce: data.drinkIce,
-            drinkSugar: data.drinkSugar,
-            drinkTopping: data.drinkTopping,
-            who: data.who,
-            id: this.nextId,
-          };
-        }
-      });
-    },
-    addNewOrder(data) {
-      this.nextId += 1;
-      this.drinkOrderData.push({
-        name: data.name,
-        quantity: data.quantity,
-        drinkIce: data.drinkIce,
-        drinkSugar: data.drinkSugar,
-        drinkTopping: data.drinkTopping,
-        who: data.who,
-        id: this.nextId,
-      });
+    updateOrderData() {
+
     },
   },
 };
