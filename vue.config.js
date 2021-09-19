@@ -16,4 +16,5 @@ module.exports = {
     // 添加别名
     config.resolve.alias.set('@', resolve('src/'));
   },
+  lintOnSave: true
 }

@@ -1,4 +1,4 @@
-export function orderSetting() {
+export default function orderSetting() {
   const iceMap = new Map();
   iceMap.set(0, '去冰');
   iceMap.set(2, '正常');
@@ -14,10 +14,16 @@ export function orderSetting() {
   toppingMap.set(2, '布丁');
   toppingMap.set(3, '椰果');
   toppingMap.set(1, '咖啡凍');
+  const menuMap = new Map();
+  menuMap.set(1, '蘋果紅萱');
+  menuMap.set(2, '翡翠綠茶');
+  menuMap.set(3, '鳳梨蜜');
+  menuMap.set(4, '厚奶茶');
+  menuMap.set(5, '四季春');
 
   function mapOrderText(kind, value) {
     const mapObjString = `${kind}Map`;
-    return this[mapObjString].get(parseInt(value));
+    return this[mapObjString].get(parseInt(value, 10));
   }
 
   const defaultTitle = [
@@ -39,6 +45,7 @@ export function orderSetting() {
     iceMap,
     sugarMap,
     toppingMap,
+    menuMap,
     mapOrderText,
     defaultTitle,
   };

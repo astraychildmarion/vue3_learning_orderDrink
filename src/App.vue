@@ -1,21 +1,20 @@
 <template>
   <h1 class="text-center my-4 text-4xl">我愛喝飲料</h1>
   <div class="drink__wrapper mx-auto w-4/5">
-    <functional-button-set
-      class="my-5 text-center"
-      @order-new-drink="openEditor"
-    />
+    <functional-button-set class="my-5 text-center" @order-new-drink="openEditor" />
     <div class="drink__list__wrapper my-4">
-      <span v-if="drinkOrders.length === 0">
-        目前沒有任何訂單，點選 add drink 訂一杯飲料來喝吧！
-      </span>
-      <div v-for="(order, index) in drinkOrders" :key="index">
-        {{ drinkOrders }}
-        <DrinkOrder
-          :order="order"
-          @clickModifyOrder="clickModifyOrder"
-          @deleteDrink="deleteDrink"
-        />
+      <span v-if="loading">Loading...</span>
+      <div v-else>
+        <span v-if="drinkOrders.length === 0">
+          目前沒有任何訂單，點選 add drink 訂一杯飲料來喝吧！
+        </span>
+        <div v-for="(order, index) in drinkOrders" :key="index">
+          <DrinkOrder
+            :order="order"
+            @clickModifyOrder="clickModifyOrder"
+            @deleteDrink="deleteDrink"
+          />
+        </div>
       </div>
       <DrinkEditor
         v-show="showEditor"
@@ -28,95 +27,77 @@
     </div>
   </div>
 </template>
-
 <script>
-import { reactive, ref } from "vue";
-import DrinkEditor from "./components/DrinkEditor.vue";
-import DrinkOrder from "./components/DrinkOrder.vue";
-import FunctionalButtonSet from "./components/FunctionalButtonSet.vue";
+import { reactive, ref } from 'vue';
+import DrinkEditor from './components/DrinkEditor.vue';
+import DrinkOrder from './components/DrinkOrder.vue';
+import FunctionalButtonSet from './components/FunctionalButtonSet.vue';
+import * as api from './api';
+
 export default {
-  name: "App",
+  name: 'App',
   components: {
     DrinkEditor,
     FunctionalButtonSet,
     DrinkOrder,
   },
   setup() {
+    const loading = ref(false);
     const showEditor = ref(false);
-    const id = ref(1);
-    const drinkOrders = reactive([]);
-    drinkOrders.push({
-      who: "ME",
-      name: "Fresh Milk",
-      quantity: "10",
-      ice: "1",
-      sugar: "1",
-      id: 0,
+    const drinkOrders = ref([]);
+    const drinkOrder = reactive({
+      who: '',
+      name: '',
+      quantity: '',
+      ice: '',
+      sugar: '',
+      id: '',
     });
-    let drinkOrder = reactive({
-      who: "",
-      name: "",
-      quantity: "",
-      ice: "",
-      sugar: "",
-      id: "",
-    });
-    const addNewOrder = (form) => {
-      // TODO WHY ??? I can not use form to push in to drinkOrders directly ?
-      drinkOrders.push({
-        who: form.who,
-        name: form.name,
-        quantity: form.quantity,
-        ice: form.ice,
-        sugar: form.sugar,
-        id: id,
-      });
-      id.value += 1;
+    const getAOrders = async () => {
+      loading.value = true;
+      const data = await api.getAllDrinks();
+      drinkOrders.value = data;
+      loading.value = false;
     };
+
     const openEditor = () => {
       showEditor.value = true;
     };
     const closeEditor = () => {
       showEditor.value = false;
     };
-    const clickModifyOrder = (order) => {
-      const currentEditDrink = drinkOrders.filter((item) => {
-        return item.id === order.id;
-      });
+    const clickModifyOrder = async (id) => {
+      const selectedDrink = await api.getOneDrink(id);
       const keys = Object.keys(drinkOrder);
       keys.forEach((key) => {
-        drinkOrder[key] = currentEditDrink[0][key];
+        drinkOrder[key] = selectedDrink.data[key];
       });
+      drinkOrder.id = selectedDrink.id;
       openEditor();
     };
-    const updateOrderData = (order) => {
-      drinkOrders.forEach((item) => {
-        if (item.id === order.id) {
-          const keys = Object.keys(drinkOrder);
-          keys.forEach((key) => {
-            item[key] = order[key];
-          });
-        }
-      });
+    const updateOrderData = async (order) => {
+      await api.updateDrink(order);
+      getAOrders();
     };
-    const deleteDrink = (order) => {
-      drinkOrders.forEach((item, index) => {
-        if (item.id === order.id) {
-          drinkOrders.splice(index, 1)
-        }
-      });
+    const deleteDrink = async (id) => {
+      // console.log('delete', order.id);
+      await api.deleteDrink(id);
+      getAOrders();
     };
+
+    getAOrders();
+
     return {
+      loading,
       drinkOrders,
       drinkOrder,
-      id,
       showEditor,
-      addNewOrder,
       clickModifyOrder,
       closeEditor,
       openEditor,
       updateOrderData,
-      deleteDrink
+      deleteDrink,
+      getAOrders,
     };
   },
   data() {
@@ -125,43 +106,73 @@ export default {
         ice: [
           {
             value: 0,
-            text: "去冰",
+            text: '去冰',
           },
           {
             value: 1,
-            text: "少冰",
+            text: '少冰',
           },
           {
             value: 2,
-            text: "正常",
+            text: '正常',
           },
           {
             value: 3,
-            text: "熱飲",
+            text: '熱飲',
           },
         ],
         sugar: [
           {
             value: 0,
-            text: "去糖",
+            text: '去糖',
           },
           {
             value: 1,
-            text: "少糖",
+            text: '少糖',
           },
           {
             value: 2,
-            text: "全糖",
+            text: '全糖',
           },
           {
             value: 3,
-            text: "多糖",
+            text: '多糖',
+          },
+        ],
+        drinkMenu: [
+          {
+            text: '蘋果紅萱',
+            value: '1',
+          },
+          {
+            text: '翡翠綠茶',
+            value: '2',
+          },
+          {
+            text: '鳳梨蜜',
+            value: '3',
+          },
+          {
+            text: '厚奶茶',
+            value: '4',
+          },
+          {
+            text: '四季春',
+            value: '5',
           },
         ],
       },
     };
-  }
+  },
+  methods: {
+    async addNewOrder(form) {
+      // TODO WHY ??? I can not use form to push in to drinkOrders directly ?
+      // use ref, so have to emit back xxx.value
+      await api.addDrink(form);
+      this.closeEditor();
+      this.getAOrders();
+    },
+  },
 };
 </script>
-<style lang="scss">
-</style>
+<style lang="scss"></style>
